@@ -3,7 +3,7 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	sun "github.com/sunrnalike/sun"
+	"github.com/sunrnalike/sun"
 	"net"
 	"net/url"
 	"sync"
@@ -32,7 +32,7 @@ type Client struct {
 	conn    net.Conn
 	state   int32
 	options ClientOptions
-	dc      *sun.DialerContext
+	Meta    map[string]string
 }
 
 // NewClient NewClient
@@ -50,6 +50,20 @@ func NewClient(id, name string, opts ClientOptions) sun.Client {
 		options: opts,
 	}
 	return cli
+}
+
+// ID return id
+func (c *Client) ServiceID() string {
+	return c.id
+}
+
+// Name Name
+func (c *Client) ServiceName() string {
+	return c.name
+}
+
+func (c *Client) GetMeta() map[string]string {
+	return c.Meta
 }
 
 // ID return id
@@ -85,10 +99,11 @@ func (c *Client) Connect(addr string) error {
 	if conn == nil {
 		return fmt.Errorf("conn is nil")
 	}
+	//这里没有调用newConn有点意思
 	c.conn = conn
 
 	if c.options.Heartbeat > 0 {
-		go func() {
+		go func() { //单独开启一个routine去心跳,这个routine会阻塞
 			err := c.heartbealoop(conn)
 			if err != nil {
 				logger.Error("heartbealoop stopped ", err)
@@ -114,7 +129,7 @@ func (c *Client) Send(payload []byte) error {
 	if err != nil {
 		return err
 	}
-	// 客户端消息需要使用MASK
+	// 客户端消息需要使用MASK,ws需要使用wsutil来写消息
 	return wsutil.WriteClientMessage(c.conn, ws.OpBinary, payload)
 }
 
@@ -124,7 +139,7 @@ func (c *Client) Close() {
 		if c.conn == nil {
 			return
 		}
-		// graceful close connection
+		// graceful close connection,也是借助wsutil
 		_ = wsutil.WriteClientMessage(c.conn, ws.OpClose, nil)
 
 		c.conn.Close()
@@ -138,7 +153,7 @@ func (c *Client) Read() (sun.Frame, error) {
 	}
 	if c.options.Heartbeat > 0 {
 		_ = c.conn.SetReadDeadline(time.Now().Add(c.options.ReadWait))
-	}
+	} //这里用的是readframe
 	frame, err := ws.ReadFrame(c.conn)
 	if err != nil {
 		return nil, err
@@ -153,7 +168,7 @@ func (c *Client) Read() (sun.Frame, error) {
 
 func (c *Client) heartbealoop(conn net.Conn) error {
 	tick := time.NewTicker(c.options.Heartbeat)
-	for range tick.C {
+	for range tick.C { //这个写法会阻塞,所以在Connect中需要单独开一个routine去执行这个心跳
 		// 发送一个ping的心跳包给服务端
 		if err := c.ping(conn); err != nil {
 			return err
@@ -162,7 +177,7 @@ func (c *Client) heartbealoop(conn net.Conn) error {
 	return nil
 }
 
-func (c *Client) ping(conn net.Conn) error {
+func (c *Client) ping(conn net.Conn) error { //心跳调用的ping方法,底层还是wstuil
 	c.Lock()
 	defer c.Unlock()
 	err := conn.SetWriteDeadline(time.Now().Add(c.options.WriteWait))

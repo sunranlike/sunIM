@@ -1,4 +1,4 @@
-package kim
+package sun
 
 import (
 	"sync"

@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	sun "github.com/sunrnalike/sun"
+	"github.com/sunrnalike/sun"
 	"net"
 
 	"github.com/gobwas/ws"

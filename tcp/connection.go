@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	sun "github.com/sunrnalike/sun"
+	"github.com/sunrnalike/sun"
 	"io"
 	"net"
 
@@ -13,6 +13,8 @@ type Frame struct {
 	OpCode  sun.OpCode
 	Payload []byte
 }
+
+//这些方法都是为了实现Frame接口
 
 // SetOpCode SetOpCode
 func (f *Frame) SetOpCode(code sun.OpCode) {
@@ -34,7 +36,7 @@ func (f *Frame) GetPayload() []byte {
 	return f.Payload
 }
 
-// Conn Conn
+// TcpConn 显式嵌入net.Conn,在构造函数NewConn就是封装了一下net.Conn
 type TcpConn struct {
 	net.Conn
 }
@@ -46,7 +48,7 @@ func NewConn(conn net.Conn) *TcpConn {
 	}
 }
 
-// ReadFrame ReadFrame
+// ReadFrame 底层调用自己写的工具
 func (c *TcpConn) ReadFrame() (sun.Frame, error) {
 	opcode, err := endian.ReadUint8(c.Conn)
 	if err != nil {
@@ -62,7 +64,6 @@ func (c *TcpConn) ReadFrame() (sun.Frame, error) {
 	}, nil
 }
 
-// WriteFrame WriteFrame
 func (c *TcpConn) WriteFrame(code sun.OpCode, payload []byte) error {
 	return WriteFrame(c.Conn, code, payload)
 }

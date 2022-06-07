@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sun "github.com/sunrnalike/sun"
+	"github.com/sunrnalike/sun"
 	"net/http"
 	"sync"
 	"time"
@@ -12,7 +12,6 @@ import (
 	"github.com/gobwas/ws"
 	"github.com/segmentio/ksuid"
 	"github.com/sunrnalike/sun/logger"
-	"github.com/sunrnalike/sun/naming"
 )
 
 // ServerOptions ServerOptions
@@ -25,7 +24,7 @@ type ServerOptions struct {
 // Server is a websocket implement of the Server
 type Server struct {
 	listen string
-	naming.ServiceRegistration
+	sun.ServiceRegistration
 	sun.ChannelMap
 	sun.Acceptor
 	sun.MessageListener
@@ -35,10 +34,10 @@ type Server struct {
 }
 
 // NewServer NewServer
-func NewServer(listen string, service naming.ServiceRegistration) sun.Server {
+func NewServer(listen string, service sun.ServiceRegistration) sun.Server {
 	return &Server{
 		listen:              listen,
-		ServiceRegistration: service,
+		ServiceRegistration: service, //这个结构实现了SR接口,作为Server的一个字段,所以这里返回的Server结构体实现了Server接口
 		options: ServerOptions{
 			loginwait: sun.DefaultLoginWait,
 			readwait:  sun.DefaultReadWait,

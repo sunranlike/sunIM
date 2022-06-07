@@ -2,7 +2,7 @@ package mock
 
 import (
 	"context"
-	sun "github.com/sunrnalike/sun"
+	"github.com/sunrnalike/sun"
 	"net"
 	"time"
 

@@ -1,10 +1,12 @@
-# KIM
+# sunIM
 
-King IM CLoud
+sunIM CLoud
 
 ## 简介
 
-    kim 是一个高性能分式式通信架构。 
+    sun 是一个高性能分式式通信架构。 
+    使用了雪花算法、rest、protobuf、wobwas、gorm
+    技术选型：mysql、redis、consul、
 
 ## 代码演示
 

@@ -1,4 +1,4 @@
-package kim
+package sun
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 )
 
 // ChannelImpl is a websocket implement of channel
+//这个结构体实现了channel接口的方法,被用作new方法的返回值
 type ChannelImpl struct {
 	sync.Mutex
 	id string
@@ -21,7 +22,7 @@ type ChannelImpl struct {
 	closed    *Event
 }
 
-// NewChannel NewChannel
+// NewChannel 构造函数,channel是干嘛的?他不是goroutine的channel,而是代表一个频道的意思,存放的是连接.
 func NewChannel(id string, conn Conn) Channel {
 	log := logger.WithFields(logger.Fields{
 		"module": "channel",
@@ -35,7 +36,7 @@ func NewChannel(id string, conn Conn) Channel {
 		writeWait: DefaultWriteWait, //default value
 		readwait:  DefaultReadWait,
 	}
-	go func() {
+	go func() { //单独开启一个goroutine,去执行writeloop
 		err := ch.writeloop()
 		if err != nil {
 			log.Info(err)
@@ -44,8 +45,9 @@ func NewChannel(id string, conn Conn) Channel {
 	return ch
 }
 
+//writeloop的实现
 func (ch *ChannelImpl) writeloop() error {
-	for {
+	for { //for+select+chan无限循环,case payload就读取数据,case Done就退出,不case就下一次for循环
 		select {
 		case payload := <-ch.writechan:
 			err := ch.WriteFrame(OpBinary, payload)
